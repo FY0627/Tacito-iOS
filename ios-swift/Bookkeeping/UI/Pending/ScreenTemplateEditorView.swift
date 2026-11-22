@@ -18,9 +18,6 @@ struct ScreenTemplateEditorView: View {
         case template(ScreenTemplate, ScreenTemplateLayout)
     }
 
-    /// 「开发与调试」里的开关：打开后点识别模板列表里的截图模板可以编辑
-    static let editingEnabledKey = "devEditScreenTemplates"
-
     let source: Source
     private let lines: [ScreenTextLine]
     private let grid: [[ScreenTextLine]]

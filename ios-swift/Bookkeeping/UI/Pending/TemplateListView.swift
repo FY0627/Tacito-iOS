@@ -2,8 +2,8 @@ import SwiftUI
 import BKModel
 
 /// 「我的 › 自动记账 › 识别模板」：自己做的模板。右上角「导入」：同一个页面里粘贴一条通知，或者从相册选一张截图点出金额（ADR 0028）；
-/// 点一个通知模板编辑，往左滑删除。截图模板没有存截图，平时不能编辑，只能往左滑删除；
-/// 「开发与调试」里打开「编辑截图模板」后，存了版面骨架的截图模板点开照骨架编辑。
+/// 点一个模板编辑，往左滑删除。截图模板没有存截图，点开照存下的版面骨架编辑；
+/// 有骨架之前做的截图模板不能编辑，只能往左滑删除。
 /// 收到通知、截图时先用这些模板认（新做的在前），都认不出再用 App 自带的读法。
 struct TemplateListView: View {
     @Environment(LedgerStore.self) private var store
@@ -17,7 +17,6 @@ struct TemplateListView: View {
     @State private var deletingID: String?
     /// 照版面骨架编辑的截图模板（「开发与调试」里打开）
     @State private var editingScreen: ScreenTemplate?
-    @AppStorage(ScreenTemplateEditorView.editingEnabledKey) private var screenEditing = false
 
     /// 弹出的编辑页：新添加，或者改一个已有的
     private enum EditorTarget: Identifiable {
@@ -72,7 +71,7 @@ struct TemplateListView: View {
                 Section("截图") {
                     ForEach(screenTemplates) { template in
                         Group {
-                            if screenEditing, template.layout != nil {
+                            if template.layout != nil {
                                 Button {
                                     editingScreen = template
                                 } label: {

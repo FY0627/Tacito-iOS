@@ -4,7 +4,7 @@ import BKBackend
 
 /// 导入数据（「我的 › 数据」，ADR 0019）：选一个「导出数据」得到的 zip，先看里面有什么，勾选导入哪几样
 /// （账本、卡面图片、设置，文件里有的默认全选；导出时没勾的不出现），账本再选增量或覆盖（`BackupImport`）。
-/// 覆盖要在按钮弹出的小菜单里再点一下。导入账本前自动把现在的数据存一份，可以撤销上次导入
+/// 覆盖要在按钮弹出的小菜单里再点一下。导入前自动把现在的账本、设置存一份，记下新存的卡面图片，撤销上次导入全部换回去
 struct DataImportView: View {
     @Environment(LedgerStore.self) private var store
     @State private var picking = false

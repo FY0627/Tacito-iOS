@@ -40,19 +40,25 @@ struct AppSettingsBackup: Codable, Equatable {
         try? JSONDecoder().decode(AppSettingsBackup.self, from: data)
     }
 
-    /// 写回本机设置，再让语言、图标、主题色马上生效。打开了通知的，没有通知权限时先问；不给就关掉
-    @MainActor func apply() async {
+    /// 写回本机设置，再让语言、图标、主题色马上生效。打开了通知的，没有通知权限时先问；不给就关掉。
+    /// `replacing`（撤销导入，换回导入前存的那份）：没有的项也换回默认，不然导入时改过的留着
+    @MainActor func apply(replacing: Bool = false) async {
         let d = UserDefaults.standard
-        if let appearance, AppearanceMode(rawValue: appearance) != nil { d.set(appearance, forKey: Self.appearanceKey) }
-        if let themeColor { d.set(themeColor, forKey: ThemeColor.key) }
-        if let primaryCurrency { d.set(primaryCurrency, forKey: ExchangeRateStore.primaryKey) }
-        if let notifyRates { d.set(notifyRates, forKey: ImportExchangeRatesIntent.notifyKey) }
-        if let statsScope { d.set(statsScope, forKey: Self.statsScopeKey) }
-        if let appIcon, AppearanceMode(rawValue: appIcon) != nil {
-            d.set(appIcon, forKey: AppearanceMode.iconKey)
+        func put(_ value: Any?, _ key: String) {
+            if let value { d.set(value, forKey: key) } else if replacing { d.removeObject(forKey: key) }
+        }
+        put(appearance.flatMap { AppearanceMode(rawValue: $0) == nil ? nil : $0 }, Self.appearanceKey)
+        put(themeColor, ThemeColor.key)
+        put(primaryCurrency, ExchangeRateStore.primaryKey)
+        put(notifyRates, ImportExchangeRatesIntent.notifyKey)
+        put(statsScope, Self.statsScopeKey)
+        let icon = appIcon.flatMap { AppearanceMode(rawValue: $0) == nil ? nil : $0 }
+        if icon != nil || replacing {
+            put(icon, AppearanceMode.iconKey)
             AppearanceMode.applyIcon()
         }
-        if let language, let selected = AppLanguage(rawValue: language), selected != AppLanguage.selected {
+        let selected = language.flatMap { AppLanguage(rawValue: $0) } ?? (replacing ? .system : nil)
+        if let selected, selected != AppLanguage.selected {
             AppLanguage.select(selected)
         }
         ThemeColor.applyToWindows()
@@ -61,6 +67,8 @@ struct AppSettingsBackup: Codable, Equatable {
         let allowed = wantsNotifications ? await IngestNotifier.requestAuthorization() : true
         if let notifyIngest, IngestNotifier.Mode(rawValue: notifyIngest) != nil {
             d.set(allowed ? notifyIngest : IngestNotifier.Mode.off.rawValue, forKey: IngestNotifier.modeKey)
+        } else if replacing {
+            d.removeObject(forKey: IngestNotifier.modeKey)
         }
         if notifyRates == true, !allowed { d.set(false, forKey: ImportExchangeRatesIntent.notifyKey) }
     }

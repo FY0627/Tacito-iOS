@@ -650,11 +650,16 @@ final class LedgerStore {
         return files
     }
 
-    /// 把备份里的卡面图片存到这台手机上（同一个标识已经有了就不动）。不要在主线程调用
-    nonisolated private static func saveFaceImages(_ images: [String: Data]) throws {
-        for (id, data) in images {
+    /// 备份里有、这台手机上还没有的卡面图片（同一个标识已经有了就不动）。不要在主线程调用
+    nonisolated private static func newFaceImages(_ images: [String: Data]) -> [String] {
+        images.keys.filter { !FileManager.default.fileExists(atPath: CardFaceImages.fileURL($0).path) }.sorted()
+    }
+
+    /// 把这几张卡面图片存到这台手机上。不要在主线程调用
+    nonisolated private static func saveFaceImages(_ ids: [String], from images: [String: Data]) throws {
+        for id in ids {
+            guard let data = images[id] else { continue }
             let url = CardFaceImages.fileURL(id)
-            guard !FileManager.default.fileExists(atPath: url.path) else { continue }
             try FileManager.default.createDirectory(
                 at: url.deletingLastPathComponent(), withIntermediateDirectories: true,
                 attributes: [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication]
@@ -663,12 +668,24 @@ final class LedgerStore {
         }
     }
 
-    /// 导入前自动存的现在的数据（撤销导入用）；每次导入换成新的一份，撤销后删掉
+    /// 导入前自动存的现在的账本（撤销导入用）；每次导入换成新的一份，撤销后删掉
     nonisolated static var undoCopyURL: URL {
         AppServices.databaseURL.deletingLastPathComponent().appendingPathComponent("导入前的数据.sqlite")
     }
 
-    var canUndoImport: Bool { FileManager.default.fileExists(atPath: Self.undoCopyURL.path) }
+    /// 撤销导入时账本以外要换回的：这次导入新存的卡面图片（撤销时删掉）、导入前的设置
+    private struct ImportUndo: Codable {
+        var addedFaceImages: [String] = []
+        var settings: AppSettingsBackup?
+    }
+
+    nonisolated static var undoExtrasURL: URL {
+        AppServices.databaseURL.deletingLastPathComponent().appendingPathComponent("导入前的设置和卡面.json")
+    }
+
+    var canUndoImport: Bool {
+        [Self.undoCopyURL, Self.undoExtrasURL].contains { FileManager.default.fileExists(atPath: $0.path) }
+    }
 
     /// 卡面图片在这台手机上：导入的账户图片不在就换成颜色
     nonisolated static let faceImageExists: @Sendable (String) -> Bool = { id in
@@ -680,14 +697,26 @@ final class LedgerStore {
         return try await backend.backupInfo(archive: archive)
     }
 
-    /// 导入选中的几样：卡面图片先存好（导入账本时卡面才认得出图片），账本导入前先把现在的数据存一份（撤销用），设置最后写回。
+    /// 导入选中的几样：卡面图片先存好（导入账本时卡面才认得出图片），账本导入前先把现在的数据存一份，设置最后写回。
+    /// 撤销上次导入把这几样都换回去：先记下要存哪几张新图片、导入前的设置，再动手，中途出错也能撤销。
     /// `ledger` 是 nil 时不动账本
     func importBackup(archive: Data, ledger mode: ImportMode?, faceImages: Bool, settings: Bool) async throws -> ImportSummary? {
         guard let backend else { throw BackendError.notFound }
         let extras = try BackupExtras.files(in: archive)
-        if faceImages {
-            let images = BackupExtras.faceImages(extras)
-            try await Task.detached(priority: .userInitiated) { try Self.saveFaceImages(images) }.value
+        let images = faceImages ? BackupExtras.faceImages(extras) : [:]
+        let newImages = await Task.detached(priority: .userInitiated) { Self.newFaceImages(images) }.value
+        let backup = settings ? extras[BackupExtras.settingsName].flatMap(AppSettingsBackup.decode) : nil
+
+        // 只撤上一次导入：之前留着的撤销数据换成这次的
+        try? FileManager.default.removeItem(at: Self.undoCopyURL)
+        let undo = ImportUndo(addedFaceImages: newImages, settings: backup == nil ? nil : AppSettingsBackup.current())
+        if !undo.addedFaceImages.isEmpty || undo.settings != nil {
+            try JSONEncoder().encode(undo).write(to: Self.undoExtrasURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+        } else {
+            try? FileManager.default.removeItem(at: Self.undoExtrasURL)
+        }
+        if !newImages.isEmpty {
+            try await Task.detached(priority: .userInitiated) { try Self.saveFaceImages(newImages, from: images) }.value
         }
         var summary: ImportSummary?
         if let mode {
@@ -695,7 +724,7 @@ final class LedgerStore {
             summary = try await backend.importBackup(archive: archive, mode: mode, keepFaceImage: Self.faceImageExists)
             await adoptLedgerRates()
         }
-        if settings, let data = extras[BackupExtras.settingsName], let backup = AppSettingsBackup.decode(data) {
+        if let backup {
             await backup.apply()
         }
         await refresh()
@@ -711,11 +740,21 @@ final class LedgerStore {
         NotificationCenter.default.post(name: .exchangeRatesDidChange, object: nil)
     }
 
-    /// 撤销上次导入：换回导入前存的那份
+    /// 撤销上次导入：账本换回导入前存的那份，删掉这次新存的卡面图片，设置换回导入前的
     func undoImport() async throws {
         guard let backend else { throw BackendError.notFound }
-        _ = try await backend.importDatabase(at: Self.undoCopyURL, mode: .replace, keepFaceImage: Self.faceImageExists)
-        try? FileManager.default.removeItem(at: Self.undoCopyURL)
+        if FileManager.default.fileExists(atPath: Self.undoCopyURL.path) {
+            _ = try await backend.importDatabase(at: Self.undoCopyURL, mode: .replace, keepFaceImage: Self.faceImageExists)
+            try? FileManager.default.removeItem(at: Self.undoCopyURL)
+        }
+        if let data = try? Data(contentsOf: Self.undoExtrasURL), let undo = try? JSONDecoder().decode(ImportUndo.self, from: data) {
+            let ids = undo.addedFaceImages
+            await Task.detached(priority: .userInitiated) {
+                for id in ids { try? FileManager.default.removeItem(at: CardFaceImages.fileURL(id)) }
+            }.value
+            await undo.settings?.apply(replacing: true)
+        }
+        try? FileManager.default.removeItem(at: Self.undoExtrasURL)
         await refresh()
     }
 

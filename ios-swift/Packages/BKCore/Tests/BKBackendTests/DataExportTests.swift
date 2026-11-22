@@ -37,6 +37,11 @@ final class DataExportTests: XCTestCase {
         let lunch = try XCTUnwrap(categories.first { $0.name == "午餐" })
         try await backend.setCategory(recordID: id, categoryID: lunch.id, note: #"午饭, 和"同事""#)
         let row = try await backend.recordDetail(id: id).row
+        _ = try await backend.saveScreenTemplate(ScreenTemplate(
+            id: "st", name: "示例钱包", anchors: ["付款成功", "付款方式"],
+            fields: [ScreenTemplateField(role: .amount, anchor: "付款成功", place: .below), ScreenTemplateField(role: .cardTail, anchor: "付款方式", place: .right)],
+            kind: .purchase, direction: .outflow, accountID: nil, createdAt: ParserSampleTests.reference
+        ))
 
         let url = temporaryURL("Tacito 数据 2026-10-20.zip")
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
@@ -44,7 +49,7 @@ final class DataExportTests: XCTestCase {
         let summary = try await backend.exportData(to: url)
         XCTAssertEqual(summary.records, 1)
         XCTAssertEqual(summary.accounts, 1)
-        XCTAssertEqual(summary.files, ["流水.csv", "账户.csv", "余额.csv", "分类.csv", "学到的分类.csv", "识别模板.csv", "汇率.csv", "待处理.csv", "原始通知.csv", "通知里的余额.csv"])
+        XCTAssertEqual(summary.files, ["流水.csv", "账户.csv", "余额.csv", "分类.csv", "学到的分类.csv", "识别模板.csv", "截图模板.csv", "汇率.csv", "待处理.csv", "原始通知.csv", "通知里的余额.csv"])
 
         let entries = try ZipStore.entries(try Data(contentsOf: url))
         XCTAssertEqual(entries.map(\.name), (summary.files + [DataExport.backupName]).map { "Tacito 数据 2026-10-20/\($0)" })
@@ -80,6 +85,12 @@ final class DataExportTests: XCTestCase {
         let ingests = try read("原始通知.csv")
         XCTAssertTrue(ingests[1].hasPrefix("\(row.record.ingestID),短信,"), ingests[1])
         XCTAssertTrue(ingests[1].hasSuffix(",\(text)"), "原文在最后一列")
+
+        let screenTemplates = try read("截图模板.csv")
+        XCTAssertTrue(
+            screenTemplates[1].hasPrefix("示例钱包,付款成功 · 付款方式,「付款成功」下面,「付款方式」右边,,支出,\(TransactionKind.purchase.displayName),按截图上的卡号,,"),
+            screenTemplates[1]
+        )
 
         let categoryLines = try read("分类.csv")
         XCTAssertTrue(categoryLines.contains { $0.hasPrefix("\(lunch.id),支出,饮食,午餐,") })

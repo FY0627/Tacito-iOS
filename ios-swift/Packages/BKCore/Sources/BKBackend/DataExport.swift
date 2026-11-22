@@ -97,6 +97,7 @@ enum DataExport {
             ("分类.csv", categoryHeader, categoryRows(tree)),
             ("学到的分类.csv", learnedHeader, try learnedRows(MerchantCategoryDAO.all(db), tree: tree, date: date)),
             ("识别模板.csv", templateHeader, try TemplateDAO.all(db).reversed().map { templateRow($0, date: date) }),
+            ("截图模板.csv", screenTemplateHeader, try ScreenTemplateDAO.all(db).reversed().map { screenTemplateRow($0, accounts: accountNames, date: date) }),
             ("汇率.csv", rateHeader, try rateRows(db, date: date)),
             ("待处理.csv", pendingHeader, try PendingDAO.all(db).map { pendingRow($0, accounts: accountNames, date: date) }),
             ("原始通知.csv", ingestHeader, try IngestDAO.all(db).map { ingestRow($0, date: date) }),
@@ -261,6 +262,27 @@ enum DataExport {
         if t.isSkip { return [t.name, t.preview, "不记", "", date(t.createdAt)] }
         let entry = MessageTemplate.entry(kind: t.kind, direction: t.direction)
         return [t.name, t.preview, entry.type.displayName + (entry.refund ? "（退款）" : ""), t.kind.displayName, date(t.createdAt)]
+    }
+
+    static let screenTemplateHeader = ["名称", "页面上固定的字", "金额", "卡号", "对方", "类型", "交易性质", "记到", "能编辑", "添加时间"]
+
+    /// 截图模板（ADR 0028）：每样东西写成挨着哪段固定的字、在它哪边，例如「付款方式」右边
+    static func screenTemplateRow(_ t: ScreenTemplate, accounts: [String: String], date: (Date?) -> String) -> [String] {
+        func place(_ role: ScreenTemplateField.Role) -> String {
+            guard let field = t.field(role) else { return "" }
+            let side = switch field.place {
+            case .right: "右边"
+            case .below: "下面"
+            case .above: "上面"
+            }
+            return "「\(field.anchor)」\(side)"
+        }
+        let entry = MessageTemplate.entry(kind: t.kind, direction: t.direction)
+        let target = t.accountID.map { accounts[$0] ?? $0 } ?? (t.field(.cardTail) == nil ? "自动" : "按截图上的卡号")
+        return [
+            t.name, t.anchors.joined(separator: " · "), place(.amount), place(.cardTail), place(.counterparty),
+            entry.type.displayName + (entry.refund ? "（退款）" : ""), t.kind.displayName, target, t.layout == nil ? "" : "是", date(t.createdAt),
+        ]
     }
 
     static let rateHeader = ["日期", "基准币种", "币种", "1 个基准币种换多少", "数据源更新时间"]

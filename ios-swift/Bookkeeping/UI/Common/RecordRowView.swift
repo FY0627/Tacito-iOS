@@ -204,8 +204,8 @@ struct RecordDetailView: View {
                     .accessibilityLabel("合并")
                 }
                 // 拆开和合并是同一个图标反过来：箭头朝左（合成的一单、手动合成的转帐才有，和合并不会同时出现）
-                if let split = splitAction {
-                    Button(action: split) {
+                if let kind = splitKind {
+                    Button { split(kind) } label: {
                         Image(systemName: "arrow.triangle.merge").rotationEffect(.degrees(-90))
                     }
                     .tint(Color.primary)
@@ -414,13 +414,23 @@ struct RecordDetailView: View {
 
     /// 右上角「拆开」做什么：合成的一单弹出选要拆出去的几笔；一笔支出和一笔收入手动合成的转帐直接拆回原来的两笔。
     /// 详情读出来之前按列表里那一笔的 `orderGroupID` 先摆好一单的按钮
-    private var splitAction: (@MainActor () -> Void)? {
+    private enum SplitKind { case order, transfer }
+
+    private var splitKind: SplitKind? {
         if let detail {
-            if !detail.orderMembers.isEmpty { return { splitting = true } }
-            if detail.mergedTransfer { return { Task { await splitTransfer() } } }
+            if !detail.orderMembers.isEmpty { return .order }
+            if detail.mergedTransfer { return .transfer }
             return nil
         }
-        return initialRow?.record.orderGroupID != nil ? { splitting = true } : nil
+        if initialRow?.record.orderGroupID != nil { return .order }
+        return nil
+    }
+
+    private func split(_ kind: SplitKind) {
+        switch kind {
+        case .order: splitting = true
+        case .transfer: Task { await splitTransfer() }
+        }
     }
 
     /// 上面那一组能改的一行：点一下弹出编辑。文字照原来的颜色，不变成主题色

@@ -163,7 +163,7 @@ struct RecordDetailSheet: View {
 /// 退款、手续费、同一单的其他几笔；方向、交易性质、状态、来源、原始通知收在「更多信息」里。
 /// 不写「流水详情」标题：点进来就知道是哪一笔。
 /// 点上面那一组里的金额、类型、分类、账户、时间这些，弹出编辑（`RecordEditor`），可以改类型、金额、币种、分类、账户、交易对方、时间、备注和实际扣款。
-/// 右上角是「合并」（能合并时）和「删除」：删除点了先在按钮下面弹出一个小菜单确认，不弹对话框。
+/// 右上角是「合并」（能合并时）或「拆开」（合成的一单、手动合成的转帐，和合并一样的图标、箭头朝左）和「删除」：删除点了先在按钮下面弹出一个小菜单确认，不弹对话框。
 /// 详情里的操作按钮文字靠左（和系统菜单一样）。
 struct RecordDetailView: View {
     let recordID: String
@@ -202,6 +202,14 @@ struct RecordDetailView: View {
                     }
                     .tint(Color.primary)
                     .accessibilityLabel("合并")
+                }
+                // 拆开和合并是同一个图标反过来：箭头朝左（合成的一单、手动合成的转帐才有，和合并不会同时出现）
+                if let split = splitAction {
+                    Button(action: split) {
+                        Image(systemName: "arrow.triangle.merge").rotationEffect(.degrees(-90))
+                    }
+                    .tint(Color.primary)
+                    .accessibilityLabel("拆开")
                 }
                 // 确认的小菜单就在这个按钮下面弹出
                 Menu {
@@ -351,14 +359,8 @@ struct RecordDetailView: View {
                 Section {
                     LabeledContent("整单", value: Fmt.money(row.record.amountMinor + detail.orderMembers.map(\.record.amountMinor).reduce(0, +), r.currency))
                     ForEach(detail.orderMembers) { member in link(member) }
-                    Button { splitting = true } label: { ActionLabel(title: "拆开") }
                 } header: {
                     Text("同一单")
-                }
-            } else if detail.mergedTransfer {
-                // 一笔支出和一笔收入手动合成的转帐：拆开回到原来的两笔
-                Section {
-                    Button { Task { await splitTransfer() } } label: { ActionLabel(title: "拆开") }
                 }
             }
 
@@ -408,6 +410,17 @@ struct RecordDetailView: View {
     /// 只看这一笔自己，列表里点进来的那一笔就能算，不用等详情读出来
     private func canMerge(_ record: LedgerRecord) -> Bool {
         record.orderGroupID == nil && record.entryType != .transfer && record.status == .posted
+    }
+
+    /// 右上角「拆开」做什么：合成的一单弹出选要拆出去的几笔；一笔支出和一笔收入手动合成的转帐直接拆回原来的两笔。
+    /// 详情读出来之前按列表里那一笔的 `orderGroupID` 先摆好一单的按钮
+    private var splitAction: (@MainActor () -> Void)? {
+        if let detail {
+            if !detail.orderMembers.isEmpty { return { splitting = true } }
+            if detail.mergedTransfer { return { Task { await splitTransfer() } } }
+            return nil
+        }
+        return initialRow?.record.orderGroupID != nil ? { splitting = true } : nil
     }
 
     /// 上面那一组能改的一行：点一下弹出编辑。文字照原来的颜色，不变成主题色

@@ -10,7 +10,7 @@ import BKBackend
 /// 默认按当天的汇率估算，银行实际扣了多少可以直接填。多币种的卡可以选从哪个币种扣：支出时这个币种的可用余额不够，
 /// 默认整笔从主币种扣（恒生就是这样，ADR 0018）。
 /// 保存前查一下同一个账户前后 3 小时有没有同样金额的记录（多半是自动记账已经记过了），有就先问一句。
-/// 也可以从相册选微信、支付宝的付款截图，识别后直接入账（ADR 0021）。
+/// 也可以从相册选微信、支付宝的付款截图，识别后直接入账（ADR 0021），记上的待分类的接着一笔一笔选分类（`CategorizeQueue`）。
 struct AddRecordView: View {
     @Environment(LedgerStore.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -39,6 +39,10 @@ struct AddRecordView: View {
     @State private var screenshotItems: [PhotosPickerItem] = []
     @State private var readingScreenshots = false
     @State private var screenshotResult: String?
+    /// 截图记上、还没分类的几笔：接着一笔一笔选分类
+    @State private var categorizing: [String] = []
+    /// 选完分类后再告诉用户的：没记上的截图
+    @State private var screenshotLeftover = ""
 
     private var accounts: [Account] { store.accounts }
 
@@ -171,6 +175,12 @@ struct AddRecordView: View {
                 let items = screenshotItems
                 screenshotItems = []
                 Task { await readScreenshots(items) }
+            }
+            .navigationDestination(isPresented: Binding(get: { !categorizing.isEmpty }, set: { if !$0 { categorizing = [] } })) {
+                CategorizeQueue(recordIDs: categorizing) {
+                    categorizing = []
+                    if screenshotLeftover.isEmpty { dismiss() } else { screenshotResult = screenshotLeftover }
+                }
             }
             .alert(screenshotResult ?? "", isPresented: Binding(get: { screenshotResult != nil }, set: { if !$0 { screenshotResult = nil } })) {
                 Button("好") { dismiss() }
@@ -319,10 +329,24 @@ struct AddRecordView: View {
         for item in items {
             if let data = try? await item.loadTransferable(type: Data.self) { images.append(data) } else { unreadable += 1 }
         }
-        let summary = await store.ingestScreenshots(images)
-        var parts = summary.isEmpty ? [] : [summary]
-        if unreadable > 0 { parts.append(L("\(unreadable) 张打不开")) }
-        screenshotResult = parts.isEmpty ? L("没有认出付款") : parts.joined(separator: L("，"))
+        let batch = await store.ingestScreenshots(images)
+        var parts = batch.summary.isEmpty ? [] : [batch.summary]
+        var leftover = batch.leftover.isEmpty ? [] : [batch.leftover]
+        if unreadable > 0 {
+            parts.append(L("\(unreadable) 张打不开"))
+            leftover.append(L("\(unreadable) 张打不开"))
+        }
+        // 记上的还没分类：直接接着选，不用回首页点
+        var uncategorized: [String] = []
+        for id in batch.recordIDs {
+            if let target = await store.categorizeTarget(recordID: id), target.row.needsCategory { uncategorized.append(id) }
+        }
+        if uncategorized.isEmpty {
+            screenshotResult = parts.isEmpty ? L("没有认出付款") : parts.joined(separator: L("，"))
+        } else {
+            screenshotLeftover = leftover.joined(separator: L("，"))
+            categorizing = uncategorized
+        }
     }
 
     /// 先查一下是不是已经记过

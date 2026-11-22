@@ -19009,6 +19009,28 @@
         }
       }
     },
+    "选分类 %lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Category %lld/%lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选分类 %lld/%lld"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇分類 %lld/%lld"
+          }
+        }
+      }
+    },
     "选分类：显示 %lld ms，写账本 %lld ms" : {
       "localizations" : {
         "en" : {

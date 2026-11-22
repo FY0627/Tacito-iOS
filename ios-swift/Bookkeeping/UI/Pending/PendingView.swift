@@ -262,6 +262,57 @@ struct CategorizePage: View {
     }
 }
 
+/// 从相册选截图记上的几笔，一笔接一笔选分类：确定了就换下一笔，「跳过」的留在首页待分类，最后一笔完了交给 `finish`。
+/// 每到一笔再取候选：前一笔刚选的分类学到了，同一个商户的下一笔就是选好的；已经有分类的跳过
+struct CategorizeQueue: View {
+    let recordIDs: [String]
+    let finish: () -> Void
+    @Environment(LedgerStore.self) private var store
+    @State private var position = 0
+    @State private var target: CategorizeTarget?
+
+    private var title: LocalizedStringKey {
+        recordIDs.count > 1 ? "选分类 \(position + 1)/\(recordIDs.count)" : "选分类"
+    }
+
+    var body: some View {
+        Group {
+            if let target {
+                CategorizeForm(target: target, title: title) { next() }
+                    .id(target.id)
+            } else {
+                Color(.systemGroupedBackground).ignoresSafeArea()
+                    .navigationTitle(title)
+                    .navigationBarTitleDisplayMode(.inline)
+            }
+        }
+        .navigationBarBackButtonHidden()
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("跳过") { next() }.disabled(target == nil)
+            }
+        }
+        .task { await advance(from: 0) }
+    }
+
+    private func next() {
+        let from = position + 1
+        Task { await advance(from: from) }
+    }
+
+    private func advance(from start: Int) async {
+        target = nil
+        for i in recordIDs.indices where i >= start {
+            if let found = await store.categorizeTarget(recordID: recordIDs[i]), found.row.needsCategory {
+                position = i
+                target = found
+                return
+            }
+        }
+        finish()
+    }
+}
+
 /// 首页、统计列表里点一笔弹出的面板：和资产页卡片详情里点一笔一样是流水详情（`RecordDetailSheet`）；
 /// 待分类的是选分类，和待处理页、通知点进来的选分类面板一样带「取消」
 struct RecordSheet: View {
@@ -286,10 +337,12 @@ struct RecordSheet: View {
 /// 「建议」是最可能的几个分类，这个商户选过的已经选好，看一眼点「确定」就行。
 /// 没确认对方的转账多一个「转给自己的账户」：算转帐，不算收支（选了分类就是转给别人）。
 /// 从通知点进来也是这个面板；自动归类的那笔，现在的分类已经选好。
-/// 保存后 `dismiss`：弹出面板里是关掉，推进来的页面是返回
+/// 保存后 `dismiss`：弹出面板里是关掉，推进来的页面是返回；给了 `onSaved` 时交给它（一笔接一笔选，`CategorizeQueue`）
 struct CategorizeForm: View {
     let row: RecordRow
     let suggested: [LedgerCategory]
+    let title: LocalizedStringKey
+    let onSaved: (() -> Void)?
 
     @Environment(LedgerStore.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -298,9 +351,11 @@ struct CategorizeForm: View {
     @State private var busy = false
     @State private var errorText: String?
 
-    init(target: CategorizeTarget) {
+    init(target: CategorizeTarget, title: LocalizedStringKey = "选分类", onSaved: (() -> Void)? = nil) {
         row = target.row
         suggested = target.suggestions.categories
+        self.title = title
+        self.onSaved = onSaved
         _categoryID = State(initialValue: target.suggestions.preferredID ?? target.row.record.categoryID)
     }
 
@@ -341,7 +396,7 @@ struct CategorizeForm: View {
             }
         }
         .disabled(busy)
-        .navigationTitle("选分类")
+        .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
@@ -361,7 +416,7 @@ struct CategorizeForm: View {
         defer { busy = false }
         do {
             try await action()
-            dismiss()
+            if let onSaved { onSaved() } else { dismiss() }
         } catch {
             errorText = L("保存失败：\(error.localizedDescription)")
         }

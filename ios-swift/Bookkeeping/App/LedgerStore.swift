@@ -524,10 +524,21 @@ final class LedgerStore {
 
     // MARK: 截图记账（ADR 0021）
 
-    /// 从相册选的付款截图：一张一张识别、入账，和快捷指令交过来的一样。返回合在一起的结果，比如「入账 2 笔，待处理 1 条」；一张都没有时是空的
-    func ingestScreenshots(_ images: [Data]) async -> String {
-        guard let backend else { return L("账本还没打开") }
+    /// 从相册选的几张截图识别完的结果
+    struct ScreenshotBatch {
+        /// 合在一起的结果，比如「入账 2 笔，待处理 1 条」；一张都没有时是空的
+        var summary = ""
+        /// 没记上的部分（待处理、没认出、读不出），没有时是空的
+        var leftover = ""
+        /// 记上、合并到的流水，按截图的顺序，不重复
+        var recordIDs: [String] = []
+    }
+
+    /// 从相册选的付款截图：一张一张识别、入账，和快捷指令交过来的一样
+    func ingestScreenshots(_ images: [Data]) async -> ScreenshotBatch {
+        guard let backend else { return ScreenshotBatch(summary: L("账本还没打开"), leftover: L("账本还没打开")) }
         var recorded = 0, merged = 0, pending = 0, skipped = 0, failed = 0
+        var recordIDs: [String] = []
         for data in images {
             do {
                 let reading = try await ScreenshotReader.read(data)
@@ -536,6 +547,7 @@ final class LedgerStore {
                 recorded += result.recordedCount
                 merged += result.mergedCount
                 pending += result.pendingCount
+                for id in result.items.compactMap(\.recordID) where !recordIDs.contains(id) { recordIDs.append(id) }
                 if result.items.isEmpty { skipped += 1 }
             } catch {
                 failed += 1
@@ -545,10 +557,13 @@ final class LedgerStore {
         var parts: [String] = []
         if recorded > 0 { parts.append(L("入账 \(recorded) 笔")) }
         if merged > 0 { parts.append(L("和已记的合并 \(merged) 笔")) }
-        if pending > 0 { parts.append(L("待处理 \(pending) 条")) }
-        if skipped > 0 { parts.append(L("\(skipped) 张没有认出付款")) }
-        if failed > 0 { parts.append(L("\(failed) 张读不出来")) }
-        return parts.joined(separator: L("，"))
+        var rest: [String] = []
+        if pending > 0 { rest.append(L("待处理 \(pending) 条")) }
+        if skipped > 0 { rest.append(L("\(skipped) 张没有认出付款")) }
+        if failed > 0 { rest.append(L("\(failed) 张读不出来")) }
+        return ScreenshotBatch(
+            summary: (parts + rest).joined(separator: L("，")), leftover: rest.joined(separator: L("，")), recordIDs: recordIDs
+        )
     }
 
     // MARK: 模拟消费

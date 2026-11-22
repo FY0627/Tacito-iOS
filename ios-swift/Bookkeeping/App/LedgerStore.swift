@@ -706,6 +706,8 @@ final class LedgerStore {
         let images = faceImages ? BackupExtras.faceImages(extras) : [:]
         let newImages = await Task.detached(priority: .userInitiated) { Self.newFaceImages(images) }.value
         let backup = settings ? extras[BackupExtras.settingsName].flatMap(AppSettingsBackup.decode) : nil
+        // 什么都不会改（图片这里都有、没选账本和设置）：上次导入的撤销数据留着
+        guard mode != nil || !newImages.isEmpty || backup != nil else { return nil }
 
         // 只撤上一次导入：之前留着的撤销数据换成这次的
         try? FileManager.default.removeItem(at: Self.undoCopyURL)

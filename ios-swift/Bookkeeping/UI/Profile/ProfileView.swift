@@ -23,7 +23,8 @@ struct ProfileView: View {
 
 /// 「我的」推进去的二级页面
 enum ProfileRoute: Hashable {
-    case shortcuts, notifications, primaryCurrency, exchangeRates, categories, autoSetup, screenshotSetup, categoryCheckup, templates, dataExport, dataImport, simulation
+    case shortcuts, notifications, primaryCurrency, exchangeRates, categories, autoSetup, screenshotSetup, categoryCheckup, templates, dataExport, dataImport,
+        statementImport, simulation
 }
 
 /// 「我的」的列表和导航栈。顶部一行和首页、资产页一样高、一样的位置；列表滚到它下面时垫一层磨砂背景（和首页一样）。
@@ -91,6 +92,10 @@ private struct ProfileList: View {
                     }
                     NavigationLink(value: ProfileRoute.dataImport) {
                         Label("导入数据", systemImage: "square.and.arrow.down")
+                    }
+                    // 银行、钱包导出的账单：和账本对一遍，补上漏记的（ADR 0029）
+                    NavigationLink(value: ProfileRoute.statementImport) {
+                        Label("导入账单", systemImage: "doc.text.below.ecg")
                     }
                     Picker(selection: $retention) {
                         Text("7 天").tag(7)
@@ -250,6 +255,7 @@ private struct ProfileList: View {
         case .templates: TemplateListView()
         case .dataExport: DataExportView()
         case .dataImport: DataImportView()
+        case .statementImport: StatementImportView()
         case .simulation: SimulationView()
         }
     }

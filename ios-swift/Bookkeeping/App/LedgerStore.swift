@@ -813,4 +813,49 @@ final class LedgerStore {
     /// 包括已停用的卡
     /// 包括删除的账户（它的流水还在）
     func account(id: String) -> Account? { allAccounts.first { $0.id == id } ?? deletedAccounts.first { $0.id == id } }
+
+    // MARK: 导入账单（ADR 0029）
+
+    func statementTemplates() async throws -> [StatementTemplate] {
+        guard let backend else { throw BackendError.notFound }
+        return try await backend.statementTemplates()
+    }
+
+    func installStatementTemplates(_ data: Data) async throws -> [StatementTemplate] {
+        guard let backend else { throw BackendError.notFound }
+        return try await backend.installStatementTemplates(data)
+    }
+
+    func deleteStatementTemplate(id: String) async throws {
+        try await backend?.deleteStatementTemplate(id: id)
+    }
+
+    func readStatement(_ document: StatementDocument, id: String) async throws -> StatementFile {
+        guard let backend else { throw BackendError.notFound }
+        return try await backend.readStatement(document, id: id)
+    }
+
+    func previewStatementImport(_ files: [StatementFile]) async throws -> StatementPreview {
+        guard let backend else { throw BackendError.notFound }
+        for file in files where file.isReady { try await backend.rememberStatementAccount(file) }
+        return try await backend.previewStatementImport(files)
+    }
+
+    func importStatementEntries(_ preview: StatementPreview, selected: Set<String>) async throws -> StatementImportSummary {
+        guard let backend else { throw BackendError.notFound }
+        let summary = try await backend.importStatementEntries(preview, selected: selected)
+        await refresh()
+        return summary
+    }
+
+    func lastStatementImport() async -> String? {
+        try? await backend?.lastStatementImport()
+    }
+
+    func undoStatementImport(batchID: String) async throws -> Int {
+        guard let backend else { throw BackendError.notFound }
+        let count = try await backend.undoStatementImport(batchID: batchID)
+        await refresh()
+        return count
+    }
 }

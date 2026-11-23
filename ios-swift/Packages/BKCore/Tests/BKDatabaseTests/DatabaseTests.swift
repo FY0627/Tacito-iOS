@@ -430,4 +430,22 @@ final class DatabaseTests: XCTestCase {
         let timeOnly = WallClock(year: nil, month: nil, day: nil, hour: 14, minute: 30)
         XCTAssertEqual(WallClockCodec.decode(WallClockCodec.encode(timeOnly), yearInferred: false)?.hour, 14)
     }
+
+    /// 迁移 16：账单模板表（ADR 0029），同一个编号保存两次是换掉
+    func testMigration16AddsStatementTemplates() throws {
+        let db = try Database(path: tempPath())
+        let json = """
+        {"format": "tacito-statement-template", "version": 1, "id": "test-csv", "name": "测试",
+         "issuer": {"type": "bank", "name": "测试银行"}, "detect": {"fileTypes": ["csv"], "contains": ["测试"]},
+         "statement": {"currency": "CNY"}, "table": {"header": ["日期", "金额"]},
+         "columns": {"date": "日期", "amount": "金额"}, "values": {"dateFormats": ["yyyy-MM-dd"]}}
+        """
+        var template = try XCTUnwrap(StatementTemplate.decode(Data(json.utf8)).first)
+        try db.writeSync { try StatementTemplateDAO.save($0, template, now: Date()) }
+        template.name = "测试二"
+        try db.writeSync { try StatementTemplateDAO.save($0, template, now: Date()) }
+        XCTAssertEqual(try db.readSync { try StatementTemplateDAO.all($0) }.map(\.name), ["测试二"])
+        XCTAssertTrue(try db.writeSync { try StatementTemplateDAO.delete($0, id: "test-csv") })
+        XCTAssertEqual(try db.readSync { try StatementTemplateDAO.all($0) }.count, 0)
+    }
 }

@@ -88,6 +88,8 @@ public enum SourceKind: String, Sendable, Codable, CaseIterable {
     case manual
     /// 微信、支付宝的付款页截图（ADR 0021）：手机上识别出的文字
     case screenshot
+    /// 导入账单补记的（ADR 0029）
+    case statement
 
     public var displayName: String {
         switch self {
@@ -98,6 +100,7 @@ public enum SourceKind: String, Sendable, Codable, CaseIterable {
         case .auto: "自动化"
         case .manual: "手动记账"
         case .screenshot: "截图"
+        case .statement: "账单导入"
         }
     }
 }

@@ -115,8 +115,9 @@ private extension View {
     }
 }
 
-/// 卡片详情里看哪段时间的流水（按收到通知的时间）。在详情右上角的时间段胶囊里选
-enum RecordPeriod: Hashable {
+/// 卡片详情里看哪段时间的流水（按收到通知的时间）。在详情右上角的时间段胶囊里选。
+/// 存成文字：统计页记住上次选的（`@AppStorage`），自定义的连同开始、结束日期一起存
+enum RecordPeriod: Hashable, RawRepresentable {
     case all
     case thisWeek
     case thisMonth
@@ -126,6 +127,31 @@ enum RecordPeriod: Hashable {
     case custom(from: Date, to: Date)
 
     static let presets: [RecordPeriod] = [.all, .thisWeek, .thisMonth, .lastMonth, .thisYear]
+
+    init?(rawValue: String) {
+        switch rawValue {
+        case "all": self = .all
+        case "thisWeek": self = .thisWeek
+        case "thisMonth": self = .thisMonth
+        case "lastMonth": self = .lastMonth
+        case "thisYear": self = .thisYear
+        default:
+            let parts = rawValue.split(separator: ":")
+            guard parts.count == 3, parts[0] == "custom", let from = Double(parts[1]), let to = Double(parts[2]) else { return nil }
+            self = .custom(from: Date(timeIntervalSinceReferenceDate: from), to: Date(timeIntervalSinceReferenceDate: to))
+        }
+    }
+
+    var rawValue: String {
+        switch self {
+        case .all: "all"
+        case .thisWeek: "thisWeek"
+        case .thisMonth: "thisMonth"
+        case .lastMonth: "lastMonth"
+        case .thisYear: "thisYear"
+        case .custom(let from, let to): "custom:\(from.timeIntervalSinceReferenceDate):\(to.timeIntervalSinceReferenceDate)"
+        }
+    }
 
     var isCustom: Bool {
         if case .custom = self { return true }

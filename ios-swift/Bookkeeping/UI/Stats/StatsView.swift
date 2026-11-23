@@ -34,7 +34,7 @@ enum StatsScope: Hashable, RawRepresentable {
 }
 
 /// 统计：右上角两个玻璃胶囊，左边选看哪些数据（全部账户、一个账户、一个币种），右边选时间段
-/// （和卡片详情一样：全部、本周、本月、上月、今年、自定义），默认本周（本月的首页上有）。
+/// （和卡片详情一样：全部、本周、本月、上月、今年、自定义），默认本周（本月的首页上有）；两边都记住上次选的，退出 App 再进来不用重选。
 /// 三种看法一个样子：上面是这段时间的支出、收入、结余，下面是支出和收入按分类排（哪一类花得最多，点进去看小类和每一笔）。
 /// 全部账户：所有币种换算成「我的」里选的主要币种（和首页的本月合计一样算）；
 /// 一个账户、一个币种：不换算，账户用了几个币种就分开几组。
@@ -60,7 +60,7 @@ struct StatsView: View {
 
     @Environment(LedgerStore.self) private var store
     @AppStorage("stats.scope") private var scope = StatsScope.all
-    @State private var period: RecordPeriod = .thisWeek
+    @AppStorage("stats.period") private var period = RecordPeriod.thisWeek
     @State private var choosingCustom = false
     /// 所有账户：全部账户、一个币种用它
     @State private var stats: MonthStats?

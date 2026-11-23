@@ -187,10 +187,12 @@ final class LedgerStore {
             if deletedAccounts != deleted { deletedAccounts = deleted }
             if self.balances != b { self.balances = b }
             if self.automation != au { self.automation = au }
-            if pendingCount != p { pendingCount = p }
             if uncategorizedCount != w { uncategorizedCount = w }
             let shots = await ScreenshotInbox.count()
             if screenshotCount != shots { screenshotCount = shots }
+            var open = p
+            if open > 0, shots > 0 { open -= await coveredByScreenshots() }
+            if pendingCount != open { pendingCount = open }
             if self.categories != c {
                 self.categories = c
                 categoryTree = CategoryTree(c)
@@ -362,6 +364,13 @@ final class LedgerStore {
         let count = try await backend.saveScreenTemplate(template)
         await refresh()
         return count
+    }
+
+    /// 待处理里由留着的截图代表的几条（`ScreenshotInbox.covers`）：首页只算在截图里
+    private func coveredByScreenshots() async -> Int {
+        guard let items = try? await backend?.openPendingItems() else { return 0 }
+        let entries = await ScreenshotInbox.all()
+        return items.filter { ScreenshotInbox.covers($0, in: entries) }.count
     }
 
     /// 留着的截图到期清掉：和通知原文同一个保留期限

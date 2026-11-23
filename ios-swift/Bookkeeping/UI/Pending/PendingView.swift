@@ -9,6 +9,8 @@ import BKModel
 /// 下面是「通知待处理」：只能「确认系统给出的候选」或「忽略」，不能借此手动编辑金额、时间。
 /// 通知没写是支出还是收入的（「无法确定资金方向」），由用户选「记为支出」或「记为收入」再记入。
 /// 认不准的写法可以用这条通知「做成识别模板」，之后同样写法的通知按模板识别。
+/// 哪种认不出就做哪种模板：截图还留着的只在「没认出的截图」里在截图上做（一笔也没认出的截图不再另列一条通知），
+/// 文字（短信、邮件、推送，快捷指令交来的截图文字）在通知那一条上做。
 /// 从卡片详情进入时只列出与这张卡有关的项（候选里有这张卡，或通知尾号与它相同）。
 struct PendingView: View {
     var account: Account?
@@ -46,18 +48,17 @@ struct PendingView: View {
                         Text(account == nil ? "没有待处理的通知" : "这张卡没有待处理的账单").foregroundStyle(.secondary)
                     }
                     ForEach(shown) { item in
-                        PendingItemCard(item: item, accounts: store.accounts.filter { $0.isCard || $0.cardType == .wallet }) { accountID, direction in
-                            await run { try await store.confirmPending(id: item.id, accountID: accountID, direction: direction) }
-                        } ignore: {
-                            await run { try await store.ignorePending(id: item.id) }
-                        } makeTemplate: {
-                            // 截图还留着的：在截图上点出金额、卡号
-                            if item.source == .screenshot, let entry = inbox.first(where: { $0.ingestID == item.ingestID }) {
-                                screenSource = entry
-                            } else {
-                                templateSource = item
-                            }
-                        }
+                        PendingItemCard(
+                            item: item,
+                            accounts: store.accounts.filter { $0.isCard || $0.cardType == .wallet },
+                            confirm: { accountID, direction in
+                                await run { try await store.confirmPending(id: item.id, accountID: accountID, direction: direction) }
+                            },
+                            ignore: {
+                                await run { try await store.ignorePending(id: item.id) }
+                            },
+                            makeTemplate: templateAction(for: item)
+                        )
                     }
                 } header: {
                     Text(account.map { L("\($0.localizedTitle) 的通知") } ?? L("通知待处理"))
@@ -65,7 +66,7 @@ struct PendingView: View {
                 if account == nil, !inbox.isEmpty {
                     Section {
                         ForEach(inbox) { entry in
-                            InboxRow(entry: entry) {
+                            InboxRow(entry: entry, recognized: entry.ingestID != nil && !items.contains { ScreenshotInbox.covers($0, in: [entry]) }) {
                                 screenSource = entry
                             } delete: {
                                 deleting = entry
@@ -102,6 +103,7 @@ struct PendingView: View {
                 Button("删除", role: .destructive) {
                     guard let entry = deleting else { return }
                     Task {
+                        await ignoreCovered(by: [entry])
                         await ScreenshotInbox.delete(entry.id)
                         await store.refresh()
                         await reload()
@@ -111,6 +113,7 @@ struct PendingView: View {
             .confirmationDialog("删除后不能恢复", isPresented: $deletingAll, titleVisibility: .visible) {
                 Button("全部删除", role: .destructive) {
                     Task {
+                        await ignoreCovered(by: inbox)
                         await ScreenshotInbox.deleteAll()
                         await store.refresh()
                         await reload()
@@ -132,8 +135,25 @@ struct PendingView: View {
     }
 
     private var shown: [PendingItem] {
-        guard let account else { return items }
-        return items.filter { Self.belongs($0, to: account) }
+        let listed = items.filter { !ScreenshotInbox.covers($0, in: inbox) }
+        guard let account else { return listed }
+        return listed.filter { Self.belongs($0, to: account) }
+    }
+
+    /// 通知那一条上的「做成识别模板」：文字做通知模板；截图还留着的在截图上做——
+    /// 这里下面「没认出的截图」已经有这张，卡片上就不放；从卡片详情进来没有那一块，卡片上打开这张截图
+    private func templateAction(for item: PendingItem) -> (() -> Void)? {
+        guard item.source == .screenshot, let entry = inbox.first(where: { $0.ingestID == item.ingestID }) else {
+            return { templateSource = item }
+        }
+        return account == nil ? nil : { screenSource = entry }
+    }
+
+    /// 删掉留着的截图前，只由它代表的那条待处理（一笔也没认出）一起忽略，不然删了截图又在通知里冒出来
+    private func ignoreCovered(by entries: [ScreenshotInbox.Entry]) async {
+        for item in items where ScreenshotInbox.covers(item, in: entries) {
+            try? await store.ignorePending(id: item.id)
+        }
     }
 
     static func belongs(_ item: PendingItem, to account: Account) -> Bool {
@@ -171,6 +191,8 @@ struct CategorizeTarget: Identifiable, Hashable {
 /// 留着的一张截图：缩略图、为什么留着、截图的时间，「做成识别模板」「删除」
 private struct InboxRow: View {
     let entry: ScreenshotInbox.Entry
+    /// 认出了、在上面的通知里等着选账户这类的；一笔也没认出的是 false
+    let recognized: Bool
     let makeTemplate: () -> Void
     let delete: () -> Void
     @State private var thumbnail: UIImage?
@@ -188,7 +210,7 @@ private struct InboxRow: View {
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 8) {
-                Text(entry.ingestID == nil ? "没有认出付款" : "已放入待处理").font(.subheadline.weight(.semibold))
+                Text(recognized ? "已放入待处理" : "没有认出付款").font(.subheadline.weight(.semibold))
                 Text(Fmt.dateTime(entry.capturedAt ?? entry.savedAt)).font(.caption).foregroundStyle(.secondary)
                 Button(action: makeTemplate) {
                     Label("做成识别模板", systemImage: "text.viewfinder")
@@ -429,7 +451,8 @@ private struct PendingItemCard: View {
     /// 记入这个账户；通知没写方向的（「无法确定资金方向」）带上用户选的方向
     let confirm: (String, FlowDirection?) async -> Void
     let ignore: () async -> Void
-    let makeTemplate: () -> Void
+    /// nil：截图还留着，模板在「没认出的截图」里做
+    let makeTemplate: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -502,7 +525,7 @@ private struct PendingItemCard: View {
                     .buttonStyle(.borderless)
                 }
             }
-            if item.rawText != nil, item.reason != .possibleDuplicate {
+            if let makeTemplate, item.rawText != nil, item.reason != .possibleDuplicate {
                 // 用这条通知做识别模板：以后同样写法的通知按模板识别
                 Button(action: makeTemplate) {
                     Label("做成识别模板", systemImage: "text.viewfinder")

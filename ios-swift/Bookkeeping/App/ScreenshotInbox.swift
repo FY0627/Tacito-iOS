@@ -39,6 +39,12 @@ enum ScreenshotInbox {
         result.classification != .skipped && (result.items.isEmpty || result.pendingCount > 0)
     }
 
+    /// 截图一笔也没认出进了待处理（「暂不支持的通知格式」）、截图还留着：只在「没认出的截图」里列一次、在截图上做模板，
+    /// 待处理的通知里不再列这一条，首页也不算两遍
+    static func covers(_ item: PendingItem, in entries: [Entry]) -> Bool {
+        item.source == .screenshot && item.reason == .unrecognized && entries.contains { $0.ingestID == item.ingestID }
+    }
+
     @discardableResult
     static func save(image: Data, reading: ScreenshotReader.Reading, ingestID: String?) async -> Entry? {
         let entry = Entry(

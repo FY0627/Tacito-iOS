@@ -423,37 +423,6 @@ final class DatabaseTests: XCTestCase {
         XCTAssertEqual(try db.readSync { try TemplateDAO.all($0) }.first?.accountID, "a1")
     }
 
-    /// 迁移 17：导入账单撤回（ADR 0029），装过那一版（版本 16）的账本删掉账单模板表，流水照旧
-    func testMigrationFromVersion16DropsStatementTemplates() throws {
-        let path = tempPath()
-        do {
-            let old = try SQLiteConnection(path: path)
-            for step in Migrations.steps where step.version <= 16 { try old.execute(step.sql) }
-            try old.setUserVersion(16)
-            try old.run(
-                "INSERT INTO statement_templates (id, name, body_json, installed_at) VALUES (?, ?, ?, ?)",
-                ["boc", "示例银行 交易明细", "{}", Date(timeIntervalSince1970: 1_790_000_000)]
-            )
-            try old.run(
-                "INSERT INTO accounts (id, name, bank_id, bank_name, last4, card_type, currency, palette_id, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                ["a1", "测试卡", "cmb", "招商银行", "0427", "debit", "CNY", "ocean", 0, Date(timeIntervalSince1970: 1_790_000_000)]
-            )
-        }
-        let db = try Database(path: path)
-        XCTAssertEqual(try db.readSync { $0.userVersion }, Migrations.latestVersion)
-        let tables = try db.readSync { db in
-            try db.query("SELECT name FROM sqlite_master WHERE type = 'table'") { $0.string(0) }
-        }
-        XCTAssertFalse(tables.contains("statement_templates"))
-        XCTAssertEqual(try db.readSync { try AccountDAO.find($0, id: "a1") }?.last4, "0427")
-        // 新装的也没有这张表
-        let fresh = try Database(path: tempPath())
-        let freshTables = try fresh.readSync { db in
-            try db.query("SELECT name FROM sqlite_master WHERE type = 'table'") { $0.string(0) }
-        }
-        XCTAssertFalse(freshTables.contains("statement_templates"))
-    }
-
     func testWallClockCodecRoundTrip() {
         let clock = WallClock(year: 2026, month: 10, day: 4, hour: 9, minute: 5, second: nil)
         XCTAssertEqual(WallClockCodec.encode(clock), "2026-10-04T09:05")

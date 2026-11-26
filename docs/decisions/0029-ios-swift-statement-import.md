@@ -79,5 +79,4 @@ PDF 先用 skill 的 `extract_pdf.py` 照 App 的方式读成字和位置。核�
   PDFKit 和电脑上的 PyMuPDF 读出的字的切法、位置不一样，电脑上没法提前发现。
 
 撤掉的：「我的 › 数据 › 导入账单」、`BKBackend/Statement/`、`StatementTemplate`、`StatementCheck`、做模板的 skill。
-迁移 16 建的 `statement_templates` 表由迁移 17 删掉（迁移 16 留着：装过这一版的手机和这一版导出的备份版本号已经是 16）。
-已经补记的流水还在，来源显示为「其他」。
+迁移 16（`statement_templates` 表）一起撤掉：TestFlight 上在测的版本（311，`78395ef`）早于这一版，数据库还在 15，没升过。

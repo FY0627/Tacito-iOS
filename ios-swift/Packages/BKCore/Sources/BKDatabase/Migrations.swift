@@ -5,7 +5,7 @@
 /// - 每个迁移在一个事务里执行，失败整体回滚，版本号不变；
 /// - 每次修改表结构都要在 `DatabaseTests` 里补迁移测试。
 public enum Migrations {
-    public static let latestVersion = 17
+    public static let latestVersion = 15
 
     static let steps: [(version: Int, sql: String)] = [
         (1, """
@@ -268,20 +268,6 @@ public enum Migrations {
         // 通知模板也能选记到哪个账户（2026-11-22，和截图模板一样）。导入备份时换成这台手机上的账户
         (15, """
         ALTER TABLE message_templates ADD COLUMN account_id TEXT;
-        """),
-        // 账单模板（ADR 0029）。导入账单已经撤回，这张表由迁移 17 删掉；这一步留着，
-        // 因为装过那一版的手机、那一版导出的备份版本号已经是 16
-        (16, """
-        CREATE TABLE statement_templates (
-            id TEXT PRIMARY KEY NOT NULL,
-            name TEXT NOT NULL,
-            body_json TEXT NOT NULL,
-            installed_at REAL NOT NULL
-        );
-        """),
-        // 导入账单撤回（2026-11-26，ADR 0029「撤回」）：账单模板不再用
-        (17, """
-        DROP TABLE IF EXISTS statement_templates;
         """),
     ]
 

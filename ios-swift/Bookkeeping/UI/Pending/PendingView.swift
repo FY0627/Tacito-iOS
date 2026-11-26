@@ -66,11 +66,9 @@ struct PendingView: View {
                 if account == nil, !inbox.isEmpty {
                     Section {
                         ForEach(inbox) { entry in
-                            InboxRow(entry: entry, recognized: entry.ingestID != nil && !items.contains { ScreenshotInbox.covers($0, in: [entry]) }) {
-                                screenSource = entry
-                            } delete: {
+                            InboxRow(entry: entry, reason: waitingReason(entry), makeTemplate: templateHelps(entry) ? { screenSource = entry } : nil, delete: {
                                 deleting = entry
-                            }
+                            })
                         }
                     } header: {
                         HStack {
@@ -149,6 +147,18 @@ struct PendingView: View {
         return account == nil ? nil : { screenSource = entry }
     }
 
+    /// 认出了、在上面的通知里等着处理的截图为什么等着；一笔也没认出的是 nil
+    private func waitingReason(_ entry: ScreenshotInbox.Entry) -> PendingReason? {
+        guard entry.ingestID != nil, !items.contains(where: { ScreenshotInbox.covers($0, in: [entry]) }) else { return nil }
+        return items.first { $0.ingestID == entry.ingestID }?.reason
+    }
+
+    /// 只是问是不是重复的截图已经认出来了（多半是模板认的），再做一遍模板没有用，不放「做成识别模板」
+    private func templateHelps(_ entry: ScreenshotInbox.Entry) -> Bool {
+        let open = items.filter { $0.ingestID == entry.ingestID }
+        return entry.ingestID == nil || open.isEmpty || !open.allSatisfy { $0.reason == .possibleDuplicate }
+    }
+
     /// 删掉留着的截图前，只由它代表的那条待处理（一笔也没认出）一起忽略，不然删了截图又在通知里冒出来
     private func ignoreCovered(by entries: [ScreenshotInbox.Entry]) async {
         for item in items where ScreenshotInbox.covers(item, in: entries) {
@@ -191,9 +201,10 @@ struct CategorizeTarget: Identifiable, Hashable {
 /// 留着的一张截图：缩略图、为什么留着、截图的时间，「做成识别模板」「删除」
 private struct InboxRow: View {
     let entry: ScreenshotInbox.Entry
-    /// 认出了、在上面的通知里等着选账户这类的；一笔也没认出的是 false
-    let recognized: Bool
-    let makeTemplate: () -> Void
+    /// 认出了、在上面的通知里等着选账户、问是不是重复这类的：写出为什么等着；一笔也没认出的是 nil
+    let reason: PendingReason?
+    /// nil 时不放「做成识别模板」（已经认出来、只是问是不是重复）
+    let makeTemplate: (() -> Void)?
     let delete: () -> Void
     @State private var thumbnail: UIImage?
 
@@ -210,12 +221,14 @@ private struct InboxRow: View {
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 8) {
-                Text(recognized ? "已放入待处理" : "没有认出付款").font(.subheadline.weight(.semibold))
+                Text(reason.map { $0.displayName.loc } ?? L("没有认出付款")).font(.subheadline.weight(.semibold))
                 Text(Fmt.dateTime(entry.capturedAt ?? entry.savedAt)).font(.caption).foregroundStyle(.secondary)
-                Button(action: makeTemplate) {
-                    Label("做成识别模板", systemImage: "text.viewfinder")
+                if let makeTemplate {
+                    Button(action: makeTemplate) {
+                        Label("做成识别模板", systemImage: "text.viewfinder")
+                    }
+                    .buttonStyle(.borderless)
                 }
-                .buttonStyle(.borderless)
                 Button(role: .destructive, action: delete) {
                     Label("删除", systemImage: "trash")
                 }

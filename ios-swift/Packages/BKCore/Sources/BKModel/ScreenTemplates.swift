@@ -16,6 +16,9 @@ public struct ScreenTemplate: Identifiable, Hashable, Sendable, Codable {
     public var fields: [ScreenTemplateField]
     public var kind: TransactionKind
     public var direction: FlowDirection
+    /// 类型选「自动」：收入还是支出按截图上写的定（金额前的 +/-、「收入」「支出」这些字），`kind`、`direction` 不用。
+    /// 同一种页面收入、支出长得一样（有的银行 App 的交易详情）时，锁定一种会把另一种记反
+    public var automatic: Bool
     /// 记到这个账户。nil 时按截图上的卡号找卡；不是 nil 时截图上的卡号是转帐的另一边
     public var accountID: String?
     public var createdAt: Date
@@ -24,7 +27,7 @@ public struct ScreenTemplate: Identifiable, Hashable, Sendable, Codable {
 
     public init(
         id: String, name: String, anchors: [String], fields: [ScreenTemplateField], kind: TransactionKind, direction: FlowDirection,
-        accountID: String?, createdAt: Date, layout: ScreenTemplateLayout? = nil
+        accountID: String?, createdAt: Date, layout: ScreenTemplateLayout? = nil, automatic: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -35,6 +38,7 @@ public struct ScreenTemplate: Identifiable, Hashable, Sendable, Codable {
         self.accountID = accountID
         self.createdAt = createdAt
         self.layout = layout
+        self.automatic = automatic
     }
 
     /// 给用户看的：页面上前几段固定的字

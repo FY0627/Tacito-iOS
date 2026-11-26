@@ -29,6 +29,8 @@ struct ScreenTemplateEditorView: View {
     @State private var image: UIImage?
     @State private var picks: [ScreenTemplateField.Role: ScreenTemplates.Cell] = [:]
     @State private var choosing: ScreenTemplates.Cell?
+    /// 类型选「自动」：收入还是支出按截图上写的定（新做的默认是它）
+    @State private var automatic = true
     @State private var type: EntryType = .expense
     @State private var refund = false
     @State private var transferDirection: FlowDirection = .outflow
@@ -70,8 +72,9 @@ struct ScreenTemplateEditorView: View {
                         TextField("模板名称", text: $name)
                     }
                     MailRow("类型") {
-                        Picker("类型", selection: TemplateEntryChoice.binding(type: $type, refund: $refund, transferDirection: $transferDirection)) {
-                            ForEach(TemplateEntryChoice.allCases, id: \.self) { Text($0.title).tag($0) }
+                        Picker("类型", selection: typeChoice) {
+                            Text("自动").tag(TemplateEntryChoice?.none)
+                            ForEach(TemplateEntryChoice.allCases, id: \.self) { Text($0.title).tag(Optional($0)) }
                         }
                         .pickerStyle(.menu)
                         .labelsHidden()
@@ -207,9 +210,20 @@ struct ScreenTemplateEditorView: View {
         if case .failure(let error)? = built, error != .missingAmount { errorText = error.message.loc }
     }
 
-    /// 点到的金额前面写了「+」是收进来的，「-」是付出去的
+    /// 菜单里的类型：nil 是「自动」
+    private var typeChoice: Binding<TemplateEntryChoice?> {
+        let fixed = TemplateEntryChoice.binding(type: $type, refund: $refund, transferDirection: $transferDirection)
+        return Binding {
+            automatic ? nil : fixed.wrappedValue
+        } set: { choice in
+            automatic = choice == nil
+            if let choice { fixed.wrappedValue = choice }
+        }
+    }
+
+    /// 点到的金额前面写了「+」是收进来的，「-」是付出去的（选了「自动」时不用猜）
     private func guessType() {
-        guard let cell = picks[.amount] else { return }
+        guard !automatic, let cell = picks[.amount] else { return }
         let text = cellText(cell).trimmingCharacters(in: .whitespaces)
         if text.hasPrefix("+") { type = .income } else if text.hasPrefix("-") || text.hasPrefix("−") { type = .expense }
     }
@@ -235,7 +249,7 @@ struct ScreenTemplateEditorView: View {
         }
         return ScreenTemplate(
             id: id, name: trimmed.isEmpty ? L("截图模板") : trimmed, anchors: parts.anchors, fields: parts.fields,
-            kind: kind, direction: direction, accountID: accountID, createdAt: existing?.createdAt ?? Date()
+            kind: kind, direction: direction, accountID: accountID, createdAt: existing?.createdAt ?? Date(), automatic: automatic
         )
     }
 
@@ -258,6 +272,7 @@ struct ScreenTemplateEditorView: View {
         refund = entry.refund
         transferDirection = existing.direction
         originalKind = existing.kind
+        automatic = existing.automatic
         accountID = existing.accountID
         name = existing.name
     }
@@ -269,6 +284,7 @@ struct ScreenTemplateEditorView: View {
 
     private func summary(_ hit: ScreenTemplates.Hit) -> String {
         var parts = [L("金额 \(hit.amount.digits)")]
+        if automatic, let direction = hit.direction { parts.append(direction == .inflow ? L("收入") : L("支出")) }
         if let tail = hit.cardTail { parts.append(L("尾号 \(tail)")) }
         if let counterparty = hit.counterparty { parts.append(counterparty) }
         return parts.joined(separator: " · ")

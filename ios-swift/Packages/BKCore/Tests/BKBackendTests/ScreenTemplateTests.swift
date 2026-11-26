@@ -52,7 +52,8 @@ final class ScreenTemplateTests: XCTestCase {
         let template = try makeTemplate(walletPage, picks: picks)
         XCTAssertEqual(template.anchors, ["示例钱包", "交易结果", "消费成功", "商户", "扣款账户", "交易时间", "订单编号", "完成"])
         XCTAssertFalse(template.anchors.joined().contains { $0.isNumber }, "不保存截图上的数字")
-        XCTAssertEqual(template.field(.amount), ScreenTemplateField(role: .amount, anchor: "消费成功", place: .below))
+        // 「消费成功」换成退款页就变了：有别的记号时不拿它找金额
+        XCTAssertEqual(template.field(.amount), ScreenTemplateField(role: .amount, anchor: "交易结果", place: .below))
         XCTAssertEqual(template.field(.counterparty), ScreenTemplateField(role: .counterparty, anchor: "商户", place: .right))
         XCTAssertEqual(template.field(.cardTail), ScreenTemplateField(role: .cardTail, anchor: "扣款账户", place: .right))
     }
@@ -317,6 +318,129 @@ final class ScreenTemplateTests: XCTestCase {
         XCTAssertEqual(saved.count, 1, "按原来的标识改，不多出一个")
         XCTAssertEqual(saved.first?.name, "改过的名称")
         XCTAssertEqual(saved.first?.layout, layout)
+    }
+
+    // MARK: 类型「自动」
+
+    /// 银行 App 的交易详情：收入、支出是同一种页面，只有标题、金额的正负号和几行字不一样。名字、卡号、金额都是编的
+    func bankDetail(_ title: String, _ big: String, time: String, amount: String, who: String?, memo: String, balance: String) -> String {
+        var rows = [
+            "12:00  5G  79", "详情", title, big, "您尾号为0427的储蓄账户最新交易提醒:",
+            "交易币种:  人民币", "交易时间:  \(time)", "交易类型:  \(title)", "交易金额:  \(amount)",
+        ]
+        if let who { rows.append("交易对象:  \(who)") }
+        rows += [
+            "交易摘要:  \(memo)", "可用余额:  \(balance)", "赚到钱再放心花!", "活钱管理就用示例宝1号",
+            "理财非存款,产品有风险,投资须谨慎(示例银行代销)  广告", "账户查询  明细查询  信用卡申请  稳健投资",
+        ]
+        return rows.joined(separator: "\n")
+    }
+
+    var incomeA: String { bankDetail("收入", "¥ +1,234.50", time: "2026/10/24 09:15:12", amount: "1234.50", who: "示例甲", memo: "汇兑(附言:电子汇入)", balance: "1234.50") }
+    var incomeB: String { bankDetail("收入", "¥ +56.78", time: "2026/10/24 09:20:02", amount: "56.78", who: "示例乙", memo: "支付机构提现", balance: "2006.34") }
+    var expense: String { bankDetail("支出", "¥ -1,924.50", time: "2026/10/24 09:21:15", amount: "1924.50", who: nil, memo: "实物贵金属购买(配送)", balance: "81.84") }
+
+    /// 点大字的金额和对方，卡号不点
+    let bankPicks: [ScreenTemplateField.Role: ScreenTemplates.Cell] = [.amount: .init(row: 3, column: 0), .counterparty: .init(row: 9, column: 1)]
+
+    func bankTemplate(automatic: Bool, picks: [ScreenTemplateField.Role: ScreenTemplates.Cell]? = nil) throws -> ScreenTemplate {
+        let built = try ScreenTemplates.build(text: incomeA, picks: picks ?? bankPicks).get()
+        return ScreenTemplate(
+            id: UUID().uuidString, name: "示例银行", anchors: built.anchors, fields: built.fields, kind: .income, direction: .inflow,
+            accountID: nil, createdAt: now, automatic: automatic
+        )
+    }
+
+    func testAmountIsNotFoundByTheIncomeWord() throws {
+        let template = try bankTemplate(automatic: true)
+        XCTAssertNotEqual(template.field(.amount)?.anchor, "收入", "「收入」换成支出页就没了，不拿它找金额")
+    }
+
+    func testAutomaticTemplateRecordsIncomeAndExpenseFromTheSamePage() async throws {
+        let backend = try makeBackend()
+        let card = try await backend.addAccount(AccountDraft(name: "", bankID: "cmb", bankName: "招商银行", last4: "0427", cardType: .debit, currency: .cny, paletteID: "ocean"))
+        _ = try await backend.addAccount(.pocket(name: "微信", type: .wallet, currency: .cny, paletteID: "ocean", walletID: "wechatpay"))
+        _ = try await backend.saveScreenTemplate(try bankTemplate(automatic: true))
+
+        let income = try await backend.ingestScreenshot(text: incomeB, capturedAt: at(12, 0))
+        XCTAssertEqual(income.recordedCount, 1)
+        let out = try await backend.ingestScreenshot(text: expense, capturedAt: at(12, 1))
+        XCTAssertEqual(out.recordedCount, 1, "收入页做的模板也认得出支出页")
+
+        let rows = try await backend.records(accountID: card.id).map(\.record)
+        XCTAssertEqual(rows.count, 2, "没点卡号也按页面上的尾号记到这张卡，不记到微信")
+        let inflow = try XCTUnwrap(rows.first { $0.direction == .inflow })
+        XCTAssertEqual(inflow.amountMinor, 5678)
+        XCTAssertEqual(inflow.kind, .income)
+        XCTAssertEqual(inflow.counterparty, "示例乙")
+        let outflow = try XCTUnwrap(rows.first { $0.direction == .outflow })
+        XCTAssertEqual(outflow.amountMinor, 192_450)
+        XCTAssertEqual(outflow.kind, .purchase)
+    }
+
+    func testFixedTemplateLeavesTheOppositePageAlone() throws {
+        let template = try bankTemplate(automatic: false)
+        XCTAssertEqual(ScreenTemplates.match(template, text: incomeB)?.amount.digits, "56.78")
+        XCTAssertNil(ScreenTemplates.match(template, text: expense), "锁定收入的模板不把支出页记成收入")
+    }
+
+    func testAutomaticDirectionFromTheSignTheWordsOrNothing() throws {
+        // 点的是「交易金额: 56.78」，没有正负号：看上面大字的「¥ +56.78」
+        let rowPicks: [ScreenTemplateField.Role: ScreenTemplates.Cell] = [.amount: .init(row: 8, column: 1)]
+        let template = try bankTemplate(automatic: true, picks: rowPicks)
+        XCTAssertEqual(ScreenTemplates.match(template, text: incomeB)?.direction, .inflow)
+        XCTAssertEqual(ScreenTemplates.match(template, text: expense)?.direction, .outflow)
+        // 大字没有正负号：看「交易类型: 支出」
+        let unsigned = expense.replacingOccurrences(of: "¥ -1,924.50", with: "¥ 1,924.50")
+        XCTAssertEqual(ScreenTemplates.match(template, text: unsigned)?.direction, .outflow)
+        // 什么都没写：看不出
+        let page = ScreenTemplates.page(walletPage.replacingOccurrences(of: "-23.50", with: "23.50").replacingOccurrences(of: "消费成功", with: "交易完成"))
+        XCTAssertNil(ScreenTemplates.direction(on: page, amountCell: .init(row: 4, column: 0), digits: "23.50"))
+    }
+
+    func testAutomaticTemplateAsksWhenThePageDoesNotSay() async throws {
+        let backend = try makeBackend()
+        let card = try await backend.addAccount(AccountDraft(name: "", bankID: "cmb", bankName: "招商银行", last4: "0427", cardType: .debit, currency: .cny, paletteID: "ocean"))
+        let page = walletPage.replacingOccurrences(of: "-23.50", with: "23.50").replacingOccurrences(of: "消费成功", with: "交易完成")
+        let built = try ScreenTemplates.build(text: page, picks: picks).get()
+        _ = try await backend.saveScreenTemplate(ScreenTemplate(
+            id: "t", name: "示例", anchors: built.anchors, fields: built.fields, kind: .purchase, direction: .outflow,
+            accountID: nil, createdAt: now, automatic: true
+        ))
+        let result = try await backend.ingestScreenshot(text: page, capturedAt: at(12, 31))
+        XCTAssertEqual(result.pendingCount, 1)
+        let pending = try await backend.openPendingItems()
+        XCTAssertEqual(pending.first?.reason, .uncertainKind, "看不出收入还是支出：让用户选")
+        XCTAssertEqual(pending.first?.candidateAccountIDs, [card.id])
+    }
+
+    func testAutomaticFlagIsSaved() async throws {
+        let backend = try makeBackend()
+        _ = try await backend.saveScreenTemplate(try bankTemplate(automatic: true))
+        let saved = try await backend.screenTemplates()
+        XCTAssertEqual(saved.first?.automatic, true)
+    }
+
+    /// 两个人各转来一样多的钱，前后不到一分钟：截图上的对方不一样，是两笔，不并成一笔
+    func testSameAmountFromTwoPeopleIsTwoRecords() async throws {
+        let backend = try makeBackend()
+        let card = try await backend.addAccount(AccountDraft(name: "", bankID: "cmb", bankName: "招商银行", last4: "0427", cardType: .debit, currency: .cny, paletteID: "ocean"))
+        _ = try await backend.saveScreenTemplate(try bankTemplate(automatic: true))
+        let first = bankDetail("收入", "¥ +50.00", time: "2026/10/24 09:15:12", amount: "50.00", who: "示例甲", memo: "转账", balance: "50.00")
+        let second = bankDetail("收入", "¥ +50.00", time: "2026/10/24 09:15:58", amount: "50.00", who: "示例乙", memo: "转账", balance: "100.00")
+        _ = try await backend.ingestScreenshot(text: first, capturedAt: at(12, 0))
+        let result = try await backend.ingestScreenshot(text: second, capturedAt: at(12, 0, 30))
+        XCTAssertEqual(result.recordedCount, 1)
+        XCTAssertEqual(result.pendingCount, 0)
+        let rows = try await backend.records(accountID: card.id)
+        XCTAssertEqual(Set(rows.compactMap(\.record.counterparty)), ["示例甲", "示例乙"])
+
+        // 同一笔截了两次：照样并成一笔
+        let again = try await backend.ingestScreenshot(text: second, capturedAt: at(12, 2))
+        XCTAssertEqual(again.mergedCount, 1)
+        XCTAssertTrue(IngestEngine.differentParties("示例甲", "示例乙"))
+        XCTAssertFalse(IngestEngine.differentParties("示*甲", "示例甲"))
+        XCTAssertFalse(IngestEngine.differentParties(nil, "示例乙"))
     }
 }
 

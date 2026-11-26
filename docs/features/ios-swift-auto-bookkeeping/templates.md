@@ -22,5 +22,7 @@
    哪种认不出就做哪种：截图还留着的只在截图上做（一笔也没认出的截图不再另列一条通知让做文字模板），文字在通知那一条上做。
    模板存页面上固定的字和每样东西挨着哪段字，不存截图和数字。列表里在「截图」那一块，往左滑删除。
    另存一份版面骨架（每段字和位置，数字换成示例），点开截图模板照骨架改；有骨架之前做的不能编辑。
+   类型可以选「自动」（新做的默认）：收入还是支出按截图上写的定（金额前的 +/-、「收入」「支出」这些字），看不出时进待处理让用户选；同一种页面收入、支出都认得出。
+   锁定了类型的模板碰上写着反方向的截图不认。没点卡号的在页面上找已添加的卡的尾号。
 
 代码：`BKModel/Templates.swift`、`BKModel/ScreenTemplates.swift`、`BKBackend/Parsing/ScreenTemplates.swift`、`UI/Pending/ScreenTemplateEditorView.swift`、`App/ScreenshotInbox.swift`、`BKBackend/Parsing/MessageTemplates.swift`、`IngestEngine.run` / `reapply`、`TemplateDAO`、`LedgerBackend.skipRecord`。

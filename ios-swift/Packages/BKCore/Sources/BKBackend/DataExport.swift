@@ -281,7 +281,7 @@ enum DataExport {
         let target = t.accountID.map { accounts[$0] ?? $0 } ?? (t.field(.cardTail) == nil ? "自动" : "按截图上的卡号")
         return [
             t.name, t.anchors.joined(separator: " · "), place(.amount), place(.cardTail), place(.counterparty),
-            entry.type.displayName + (entry.refund ? "（退款）" : ""), t.kind.displayName, target, t.layout == nil ? "" : "是", date(t.createdAt),
+            t.automatic ? "自动" : entry.type.displayName + (entry.refund ? "（退款）" : ""), t.automatic ? "" : t.kind.displayName, target, t.layout == nil ? "" : "是", date(t.createdAt),
         ]
     }
 

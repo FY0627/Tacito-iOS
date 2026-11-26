@@ -126,8 +126,9 @@ struct IngestEngine {
         let accounts = try AccountDAO.all(db)
         // 固定写法认不出尾号时，在正文里找已添加的卡的尾号；再找卡片信息里填的账号、完整卡号
         // 电子钱包发的不找：里面的四位数字（订单号、金额）不是卡号
-        // 截图上的数字多半是单号和时间，也不找
-        let fallbackTail = parsed.walletHint != nil || screenshot != nil ? nil
+        // 截图上的数字多半是单号和时间，也不找；截图模板认出的、没点卡号的找：银行 App 的页面写着「您尾号为1234的储蓄账户」，
+        // 不找就记到了微信、支付宝钱包里
+        let fallbackTail = parsed.walletHint != nil || (screenshot != nil && !templateHit) ? nil
             : Self.knownTail(in: parsed.cleanedText, accounts: accounts) ?? Self.identifierTail(in: parsed.cleanedText, accounts: accounts)
 
         // 自动化可以对所有短信 / 邮件 / App 通知触发，先筛掉不是动账的：
@@ -450,6 +451,11 @@ struct IngestEngine {
             let reading = ScreenshotParser.parse(raw, referenceDate: meta.receivedAt ?? meta.processedAt, calendar: calendar, sender: meta.sender)
             var draft = ScreenTemplates.draft(hit, template: template, parsed: reading.message)
             draft.partIndex = try PendingDAO.nextPartIndex(db, ingestID: ingestID)
+            // 没点卡号：页面上写着已添加的卡的尾号就是它（和 `process` 一样）
+            if draft.cardTail == nil, draft.walletHint == nil, forced == nil {
+                let text = reading.message.cleanedText
+                draft.cardTail = Self.knownTail(in: text, accounts: accounts) ?? Self.identifierTail(in: text, accounts: accounts)
+            }
             for item in items { _ = try PendingDAO.resolve(db, id: item.id, status: .ignored, at: now) }
             let route = forced.map { ScreenshotRoute(account: $0, assumed: false, pending: nil, candidates: []) }
                 ?? screenshotRoute(draft, reading: reading, accounts: accounts)
@@ -918,12 +924,31 @@ struct IngestEngine {
             }
             // 两张截图都写了单号又不一样：是两笔
             if record.source == other.source, let a = record.bankReference, let b = other.bankReference, a != b { return false }
+            // 两张截图的对方不是同一个人（两个人各转来一样多的钱）：是两笔
+            if record.source == other.source, Self.differentParties(record.counterparty, other.counterparty) { return false }
             if let a = date(of: record.transactionTime), let b = date(of: other.transactionTime) { return abs(a.timeIntervalSince(b)) <= 3 * 60 }
             // 两张截图都没写时间（付款成功页）：截图的时间要很近
             if record.source == other.source { return abs(record.effectiveAt.timeIntervalSince(other.effectiveAt)) <= 3 * 60 }
             return true
         }
         return matches.count == 1 ? matches[0] : nil
+    }
+
+    /// 两边都写了对方、明显不是同一个：去掉符号和空白后谁也不包含谁，打码的「*」当作任意几个字
+    /// （「张*三」和「张晓三」、「示例小馆」和「示例小馆(总店)」算同一个）
+    static func differentParties(_ a: String?, _ b: String?) -> Bool {
+        func plain(_ name: String?) -> String? {
+            guard let name else { return nil }
+            let kept = TextNormalizer.normalize(name).lowercased().filter { $0.isLetter || $0.isNumber || $0 == "*" }
+            return kept.contains(where: { $0 != "*" }) ? kept : nil
+        }
+        guard let x = plain(a), let y = plain(b) else { return false }
+        /// `masked` 去掉打码后的样子出现在 `other` 里（打码的地方是任意几个字）
+        func covers(_ masked: String, _ other: String) -> Bool {
+            let pattern = masked.split(separator: "*").map { NSRegularExpression.escapedPattern(for: String($0)) }.joined(separator: ".*")
+            return other.filter { $0 != "*" }.range(of: pattern, options: .regularExpression) != nil
+        }
+        return !covers(x, y) && !covers(y, x)
     }
 
     /// 以前那笔截图的钱包是不是猜的：看它的截图原文写没写用什么付的。有一张写明了就不是；原文已经清掉的不算猜的

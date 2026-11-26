@@ -123,7 +123,7 @@ struct TemplateListView: View {
     private func screenRow(_ template: ScreenTemplate) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(template.name).font(.headline).foregroundStyle(Color.primary)
-            Text("\(template.kind.displayName.loc) · \(template.direction.displayName.loc)")
+            Text(template.automatic ? L("自动") : "\(template.kind.displayName.loc) · \(template.direction.displayName.loc)")
                 .font(.subheadline).foregroundStyle(Color.secondary)
             Text(template.preview).font(.caption).foregroundStyle(Color.secondary).lineLimit(2)
         }

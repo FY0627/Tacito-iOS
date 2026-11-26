@@ -310,11 +310,13 @@ final class LedgerStore {
 
     func confirmPending(id: String, accountID: String, direction: FlowDirection? = nil) async throws {
         try await backend?.confirmPending(id: id, accountID: accountID, direction: direction)
+        await dropHandledScreenshots()
         await refresh()
     }
 
     func ignorePending(id: String) async throws {
         try await backend?.ignorePending(id: id)
+        await dropHandledScreenshots()
         await refresh()
     }
 
@@ -376,6 +378,18 @@ final class LedgerStore {
     /// 留着的截图到期清掉：和通知原文同一个保留期限
     private func purgeScreenshots() async {
         await ScreenshotInbox.purge(olderThan: await retentionDays())
+        await dropHandledScreenshots()
+    }
+
+    /// 认出了、进了待处理的截图，待处理那几条都处理完（记入、忽略、是重复）就不再留着：
+    /// 不然一直列在「没认出的截图」里，看着像模板没认出来
+    private func dropHandledScreenshots() async {
+        guard let backend, let items = try? await backend.openPendingItems() else { return }
+        let open = Set(items.map(\.ingestID))
+        for entry in await ScreenshotInbox.all() {
+            guard let ingestID = entry.ingestID, !open.contains(ingestID) else { continue }
+            await ScreenshotInbox.delete(entry.id)
+        }
     }
 
     /// 确认转账的对方：自己的账户（不算收支）或别人

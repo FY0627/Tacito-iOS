@@ -1189,28 +1189,6 @@
         }
       }
     },
-    "「%@」的密码不对" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wrong password for “%@”."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%@」的密码不对"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%@」的密碼不對"
-          }
-        }
-      }
-    },
     "「%@」里有" : {
       "localizations" : {
         "en" : {
@@ -1629,28 +1607,6 @@
         }
       }
     },
-    "不认识这种文件" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This file type isn’t supported."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "不认识这种文件"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "不認識這種檔案"
-          }
-        }
-      }
-    },
     "不记" : {
       "localizations" : {
         "en" : {
@@ -1691,28 +1647,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不記了"
-          }
-        }
-      }
-    },
-    "不记（交易关闭、账户里挪钱）" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not Recorded (Closed, Internal Moves)"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "不记（交易关闭、账户里挪钱）"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "不記（交易關閉、帳戶內移轉）"
           }
         }
       }
@@ -3577,50 +3511,6 @@
         }
       }
     },
-    "全不选" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deselect All"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "全不选"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "全不選"
-          }
-        }
-      }
-    },
-    "全选" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select All"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "全选"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "全選"
-          }
-        }
-      }
-    },
     "全部" : {
       "localizations" : {
         "en" : {
@@ -4041,28 +3931,6 @@
         }
       }
     },
-    "再加几份" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add More"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "再加几份"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "再加幾份"
-          }
-        }
-      }
-    },
     "再建三个 **电子邮件** 自动化，**主题包含** 分别填 **空格**、**你**、**您**，其余同第 1、2 步。" : {
       "localizations" : {
         "en" : {
@@ -4327,28 +4195,6 @@
         }
       }
     },
-    "出错了：%@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Something went wrong: %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "出错了：%@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "出錯了：%@"
-          }
-        }
-      }
-    },
     "分类" : {
       "localizations" : {
         "en" : {
@@ -4481,28 +4327,6 @@
         }
       }
     },
-    "删掉上次补记的流水" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Last Recorded Transactions"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "删掉上次补记的流水"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "刪掉上次補記的明細"
-          }
-        }
-      }
-    },
     "删掉现在的数据，全部换成导入的" : {
       "localizations" : {
         "en" : {
@@ -4521,40 +4345,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "刪掉現在的資料，全部換成匯入的"
-          }
-        }
-      }
-    },
-    "删掉这次补记的 %lld 笔" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Delete the %lld Recorded Transaction"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Delete the %lld Recorded Transactions"
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "删掉这次补记的 %lld 笔"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "刪掉這次補記的 %lld 筆"
           }
         }
       }
@@ -8049,50 +7839,6 @@
         }
       }
     },
-    "密码" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Password"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "密码"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "密碼"
-          }
-        }
-      }
-    },
-    "密码不对" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wrong password."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "密码不对"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "密碼不對"
-          }
-        }
-      }
-    },
     "富国银行" : {
       "localizations" : {
         "en" : {
@@ -8181,28 +7927,6 @@
         }
       }
     },
-    "对不上：%@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Doesn’t add up: %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "对不上：%@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "對不上：%@"
-          }
-        }
-      }
-    },
     "对方" : {
       "localizations" : {
         "en" : {
@@ -8243,28 +7967,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "對象旁邊找不到固定的文字，換一段試試"
-          }
-        }
-      }
-    },
-    "对账" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reconcile"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "对账"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "對帳"
           }
         }
       }
@@ -8419,28 +8121,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "匯入匯率後，依交易當天的匯率估算"
-          }
-        }
-      }
-    },
-    "导入账单" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Import Statements"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "导入账单"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "匯入帳單"
           }
         }
       }
@@ -8655,28 +8335,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "尾号 %@ 卡"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "末四碼 %@ 的卡"
-          }
-        }
-      }
-    },
-    "尾号 %@ 的卡" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Card Ending %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "尾号 %@ 的卡"
           }
         },
         "zh-Hant" : {
@@ -9073,40 +8731,6 @@
         }
       }
     },
-    "已经删掉上次补记的 %lld 笔。" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Deleted %lld recorded transaction."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Deleted %lld recorded transactions."
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已经删掉上次补记的 %lld 笔。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已刪掉上次補記的 %lld 筆。"
-          }
-        }
-      }
-    },
     "已经换回导入前的数据。" : {
       "localizations" : {
         "en" : {
@@ -9191,40 +8815,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已經新增過這張卡（同一銀行、同一末四碼、同一卡片類型）。"
-          }
-        }
-      }
-    },
-    "已经记了 %lld 笔" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Already Recorded"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Already Recorded"
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已经记了 %lld 笔"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已經記了 %lld 筆"
           }
         }
       }
@@ -11431,50 +11021,6 @@
         }
       }
     },
-    "撤销上次导入账单" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Undo Last Statement Import"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "撤销上次导入账单"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "撤銷上次匯入帳單"
-          }
-        }
-      }
-    },
-    "撤销这次导入" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Undo This Import"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "撤销这次导入"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "撤銷這次匯入"
-          }
-        }
-      }
-    },
     "操作失败" : {
       "localizations" : {
         "en" : {
@@ -13149,28 +12695,6 @@
         }
       }
     },
-    "核对过：%@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Checked: %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "核对过：%@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已核對：%@"
-          }
-        }
-      }
-    },
     "桑坦德银行" : {
       "localizations" : {
         "en" : {
@@ -13277,28 +12801,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "範本名稱"
-          }
-        }
-      }
-    },
-    "模板格式不对：%@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Invalid template: %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "模板格式不对：%@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "範本格式不對：%@"
           }
         }
       }
@@ -13761,28 +13263,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "沒有收到匯率資料。請在「匯率資料」裡選擇「取得 URL 的內容」的結果。"
-          }
-        }
-      }
-    },
-    "没有模板认得出" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No template matches this file."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "没有模板认得出"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "沒有範本認得出"
           }
         }
       }
@@ -14689,40 +14169,6 @@
         }
       }
     },
-    "漏记 %lld 笔" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Missing"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Missing"
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "漏记 %lld 笔"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "漏記 %lld 筆"
-          }
-        }
-      }
-    },
     "演示数据" : {
       "localizations" : {
         "en" : {
@@ -15559,40 +15005,6 @@
         }
       }
     },
-    "用没添加的卡付的 %lld 笔" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Paid with Cards Not Added"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Paid with Cards Not Added"
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "用没添加的卡付的 %lld 笔"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "用沒新增的卡付的 %lld 筆"
-          }
-        }
-      }
-    },
     "用自己的照片" : {
       "localizations" : {
         "en" : {
@@ -15831,28 +15243,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "盛京銀行"
-          }
-        }
-      }
-    },
-    "看不出收支的" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Direction Unknown"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "看不出收支的"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "看不出收支的"
           }
         }
       }
@@ -17331,74 +16721,6 @@
         }
       }
     },
-    "补记 %lld 笔" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Record %lld Transaction"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Record %lld Transactions"
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "补记 %lld 笔"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "補記 %lld 筆"
-          }
-        }
-      }
-    },
-    "补记了 %lld 笔" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Recorded %lld transaction."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Recorded %lld transactions."
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "补记了 %lld 笔"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已補記 %lld 筆"
-          }
-        }
-      }
-    },
     "表格（CSV）" : {
       "localizations" : {
         "en" : {
@@ -17417,28 +16739,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "表格（CSV）"
-          }
-        }
-      }
-    },
-    "装上了模板：%@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Template installed: %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "装上了模板：%@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已安裝範本：%@"
           }
         }
       }
@@ -17553,50 +16853,6 @@
         }
       }
     },
-    "要密码" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Password Required"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "要密码"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "需要密碼"
-          }
-        }
-      }
-    },
-    "要密码的账单" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Locked Statements"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "要密码的账单"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "需要密碼的帳單"
-          }
-        }
-      }
-    },
     "覆盖导入" : {
       "localizations" : {
         "en" : {
@@ -17637,28 +16893,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "解除圈存／取消預授權"
-          }
-        }
-      }
-    },
-    "解锁" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unlock"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "解锁"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "解鎖"
           }
         }
       }
@@ -18411,28 +17645,6 @@
         }
       }
     },
-    "账单" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Statements"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "账单"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "帳單"
-          }
-        }
-      }
-    },
     "账单/对账单（不重复入账）" : {
       "localizations" : {
         "en" : {
@@ -18451,72 +17663,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "帳單／對帳單（不重複入帳）"
-          }
-        }
-      }
-    },
-    "账单上没有能核对的数字" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nothing on the statement to check against."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "账单上没有能核对的数字"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "帳單上沒有能核對的數字"
-          }
-        }
-      }
-    },
-    "账单上的都记过了" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Everything on the statements is recorded."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "账单上的都记过了"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "帳單上的都記過了"
-          }
-        }
-      }
-    },
-    "账单模板" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Statement Templates"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "账单模板"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "帳單範本"
           }
         }
       }
@@ -18737,40 +17883,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "帳本還沒開啟"
-          }
-        }
-      }
-    },
-    "账本里有、账单上没有 %lld 笔" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld in Ledger, Not on Statements"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld in Ledger, Not on Statements"
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "账本里有、账单上没有 %lld 笔"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "帳本裡有、帳單上沒有 %lld 筆"
           }
         }
       }
@@ -19413,28 +18525,6 @@
         }
       }
     },
-    "还没有模板" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No Templates"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "还没有模板"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "還沒有範本"
-          }
-        }
-      }
-    },
     "还没有汇率" : {
       "localizations" : {
         "en" : {
@@ -20025,28 +19115,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "選擇檔案"
-          }
-        }
-      }
-    },
-    "选择账单" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose Statements"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "选择账单"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "選擇帳單"
           }
         }
       }

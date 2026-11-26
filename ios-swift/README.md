@@ -23,7 +23,6 @@ ios-swift/
 │   ├── Sources/BKModel/           值类型：账户、流水、金额（整数最小单位）
 │   ├── Sources/BKDatabase/        SQLite3 封装、迁移、DAO
 │   ├── Sources/BKBackend/         解析、匹配、去重、入账、统计（LedgerBackend）
-│   ├── Sources/StatementCheck/    试读账单模板的命令行（做模板的 skill 用，不进 App，ADR 0029）
 │   └── Tests/                     单元测试（脱敏构造样例）
 └── ci/                            GitHub Actions 调用的脚本
 ```

@@ -26,8 +26,6 @@ let package = Package(
             ]
         ),
         .target(name: "BKBackend", dependencies: ["BKModel", "BKDatabase"]),
-        // 试读账单模板的命令行（ADR 0029）：skill 和开发者用，不进 App
-        .executableTarget(name: "StatementCheck", dependencies: ["BKBackend", "BKModel"]),
         .testTarget(name: "BKDatabaseTests", dependencies: ["BKDatabase", "BKModel"]),
         .testTarget(name: "BKBackendTests", dependencies: ["BKBackend", "BKDatabase", "BKModel"]),
     ],

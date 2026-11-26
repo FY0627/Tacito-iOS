@@ -884,29 +884,6 @@ public enum IngestDAO {
     }
 
     /// 手动记的一笔也记一条输入（流水要有来源），不写正文、不进接收日志
-    /// 导入账单补记的一笔（ADR 0029）：发送方写模板名称，主题写文件名，`message_id` 是这次导入的编号（撤销时按它找），原文是账单上的那一行
-    public static func insertStatement(
-        _ db: SQLiteConnection, id: String, batchID: String, templateName: String, fileName: String, text: String, receivedAt: Date, processedAt: Date
-    ) throws {
-        try db.run(
-            """
-            INSERT INTO ingests (id, fingerprint, source, sender, subject, received_at, message_id, processed_at, raw_text, classification, outcome, detail, parser_version)             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', 0)
-            """,
-            [
-                id, "statement|" + id, SourceKind.statement.rawValue, templateName, fileName, receivedAt, batchID, processedAt, text,
-                MessageClassification.transaction.rawValue, IngestOutcome.recorded.rawValue,
-            ]
-        )
-    }
-
-    /// 某次导入账单补记的流水
-    public static func statementRecordIDs(_ db: SQLiteConnection, batchID: String) throws -> [String] {
-        try db.query(
-            "SELECT r.id FROM records r JOIN ingests i ON i.id = r.ingest_id WHERE i.source = ? AND i.message_id = ?",
-            [SourceKind.statement.rawValue, batchID]
-        ) { $0.string(0) }
-    }
-
     public static func insertManual(_ db: SQLiteConnection, id: String, receivedAt: Date, processedAt: Date) throws {
         try db.run(
             """
@@ -1145,32 +1122,6 @@ public enum TemplateDAO {
 }
 
 /// 截图模板（ADR 0028）
-/// 账单模板（ADR 0029）：模板文件原样存成 JSON；读不出的（以后的格式改了）跳过
-public enum StatementTemplateDAO {
-    public static func all(_ db: SQLiteConnection) throws -> [StatementTemplate] {
-        try db.query("SELECT body_json FROM statement_templates ORDER BY installed_at, id", []) { row in
-            (try? StatementTemplate.decode(Data(row.string(0).utf8)))?.first
-        }
-        .compactMap { $0 }
-    }
-
-    /// 同一个编号的换成新的
-    public static func save(_ db: SQLiteConnection, _ template: StatementTemplate, now: Date) throws {
-        try db.run(
-            """
-            INSERT INTO statement_templates (id, name, body_json, installed_at) VALUES (?, ?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET name = excluded.name, body_json = excluded.body_json, installed_at = excluded.installed_at
-            """,
-            [template.id, template.name, String(decoding: template.encoded(), as: UTF8.self), now]
-        )
-    }
-
-    @discardableResult
-    public static func delete(_ db: SQLiteConnection, id: String) throws -> Bool {
-        try db.run("DELETE FROM statement_templates WHERE id = ?", [id]) > 0
-    }
-}
-
 public enum ScreenTemplateDAO {
     private struct Body: Codable {
         var anchors: [String]

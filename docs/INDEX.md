@@ -24,7 +24,7 @@
 | 卡包转场卡顿、玻璃按钮（UIKit + Core Animation） | [0012](decisions/0012-ios-swift-wallet-core-animation.md) | `UI/Assets/{WalletController,CardMotion}.swift`、`UI/Common/GlassControls.swift` |
 | 表结构、迁移、事务、并发 | [0007](decisions/0007-ios-swift-sqlite.md) | `BKDatabase/` |
 | 导出（勾选导出哪几样）、导入 | [0019](decisions/0019-ios-swift-export-and-import.md) | `BKBackend/{DataExport,BackupImport,BackupExtras,ZipStore}.swift`、`UI/Profile/Data*View.swift` |
-| 导入账单、对账补漏记、账单模板格式、做模板的 skill、试读命令行 | [0029](decisions/0029-ios-swift-statement-import.md)、[skill](../.claude/skills/statement-template/SKILL.md)、[模板格式](../.claude/skills/statement-template/FORMAT.md) | `BKModel/StatementTemplate.swift`、`BKBackend/Statement/`、`App/StatementFileReader.swift`、`UI/Profile/StatementImportView.swift`、`ios-swift/Packages/BKCore/Sources/StatementCheck/` |
+| 导入账单对账（已撤回） | [0029](decisions/0029-ios-swift-statement-import.md) | — |
 | 演示数据 | [0025](decisions/0025-ios-swift-demo-ledger.md) | `App/DemoMode.swift`、`BKBackend/DemoLedger.swift` |
 | 「我的」页、快捷指令页、通知页、语言、主题色、反馈、新手引导 | [ios-swift/README.md](../ios-swift/README.md) | `UI/Profile/`（`ShortcutsView`、`NotificationSettingsView`）、`UI/Shell/OnboardingView.swift` |
 | 语言、翻译表 | [0022](decisions/0022-ios-swift-languages.md) | `App/AppLanguage.swift`、`ios-swift/Localization/` |
